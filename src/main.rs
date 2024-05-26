@@ -62,7 +62,7 @@ impl Block {
 #[derive(Debug)]
 struct Blockchain {
     chain: Vec<Block>,
-    transaction: Vec<Transaction>,
+    pending_transaction: Vec<Transaction>,
     amount: u32,
 }
 
@@ -70,7 +70,7 @@ impl Blockchain {
     fn new() -> Self {
         Blockchain {
             chain: vec![Blockchain::create_genesis_block()],
-            transaction: Vec::new(),
+            pending_transaction: Vec::new(),
             amount: 0,
         }
     }
@@ -79,10 +79,22 @@ impl Blockchain {
         Block::new(0, current_timestamp(), Vec::new(), String::from("0"))
     }
 
+    fn create_new_block(&mut self) {
+        let block = Block::new(
+            self.chain.len() as u32,
+            current_timestamp(),
+            self.pending_transaction.clone(),
+            self.chain.last().unwrap().hash.clone(),
+        );
+        self.chain.push(block);
+        self.pending_transaction = Vec::new();
+    }
+
     fn create_transaction(&mut self, transaction: Transaction) {
         let amount = transaction.amount;
-        self.transaction.push(transaction);
+        self.pending_transaction.push(transaction);
         self.amount += amount;
+        self.create_new_block();
     }
 
     fn is_chain_valid(&self) -> bool {
